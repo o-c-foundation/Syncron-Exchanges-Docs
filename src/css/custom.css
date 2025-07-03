@@ -1,0 +1,139 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  /* Common Theme Variables */
+  --ifm-color-primary: #3b82f6;
+  --ifm-color-primary-dark: #1d4ed8;
+  --ifm-color-primary-darker: #1e40af;
+  --ifm-color-primary-darkest: #1e3a8a;
+  --ifm-color-primary-light: #60a5fa;
+  --ifm-color-primary-lighter: #93c5fd;
+  --ifm-color-primary-lightest: #bfdbfe;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --ifm-navbar-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+  --ifm-toc-border-color: #e5e7eb;
+
+  /* SyncDex (DEX) Custom Colors */
+  --syncdex-gradient-start: #3b82f6;
+  --syncdex-gradient-end: #10b981;
+  --syncdex-accent: #10b981;
+  --syncdex-green: #10B981;
+  --syncdex-green-dark: #059669;
+  --syncdex-green-light: #34D399;
+  
+  /* Syncron (CEX) Custom Colors */
+  --syncron-gradient-start: #7928CA;
+  --syncron-gradient-end: #FF0080;
+  --syncron-accent: #FF0080;
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #60a5fa;
+  --ifm-color-primary-dark: #3b82f6;
+  --ifm-color-primary-darker: #2563eb;
+  --ifm-color-primary-darkest: #1d4ed8;
+  --ifm-color-primary-light: #93c5fd;
+  --ifm-color-primary-lighter: #bfdbfe;
+  --ifm-color-primary-lightest: #dbeafe;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --ifm-navbar-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.25);
+  --ifm-toc-border-color: #374151;
+
+  /* SyncDex Custom Colors - Dark Mode */
+  --syncdex-gradient-start: #2563eb;
+  --syncdex-gradient-end: #059669;
+  --syncdex-accent: #34d399;
+  --syncdex-green: #34D399;
+  --syncdex-green-dark: #10B981;
+  --syncdex-green-light: #6EE7B7;
+  
+  /* Syncron Custom Colors - Dark Mode */
+  --syncron-gradient-start: #9333ea;
+  --syncron-gradient-end: #f43f5e;
+  --syncron-accent: #f472b6;
+}
+
+/* Custom SyncDex Styling */
+
+/* Navbar styling */
+.navbar {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .navbar {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Gradient text for certain headings */
+.hero__title {
+  background: var(--syncdex-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Custom callouts for warnings, notes, and tips */
+.alert--warning {
+  background-color: rgba(253, 186, 116, 0.15);
+  border-left-color: #FB923C;
+}
+
+[data-theme='dark'] .alert--warning {
+  background-color: rgba(253, 186, 116, 0.1);
+}
+
+.alert--info {
+  background-color: rgba(147, 197, 253, 0.15);
+  border-left-color: #60A5FA;
+}
+
+[data-theme='dark'] .alert--info {
+  background-color: rgba(147, 197, 253, 0.1);
+}
+
+.alert--success {
+  background-color: rgba(52, 211, 153, 0.15);
+  border-left-color: #10B981;
+}
+
+[data-theme='dark'] .alert--success {
+  background-color: rgba(52, 211, 153, 0.1);
+}
+
+/* Code blocks */
+.prism-code {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .prism-code {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Card styling for specific sections */
+.card {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
