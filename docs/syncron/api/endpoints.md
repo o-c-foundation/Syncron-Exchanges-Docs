@@ -265,30 +265,115 @@ Retrieves all open orders.
 
 ## Margin Trading Endpoints
 
-### Get Margin Account Details
+For detailed documentation on margin trading API, see [Margin Trading API](/docs/syncron/api/margin).
+
+### Margin Account Endpoints
 
 ```
-GET /margin/account
+GET /api/v3/margin/account
 ```
-
-Returns margin account details.
-
-**Authentication Required:** User
-
-### Transfer Between Spot and Margin
+Retrieves the user's margin account information including assets, borrowed amounts, interest rates, and account health.
 
 ```
-POST /margin/transfer
+GET /api/v3/margin/balance
 ```
+Retrieves the balance details for a specific asset in the user's margin account.
 
-Transfers assets between spot and margin accounts.
+```
+POST /api/v3/margin/transfer
+```
+Transfers funds between your margin account and spot account.
 
-**Authentication Required:** Trade
+```
+GET /api/v3/margin/maxBorrowable
+```
+Queries the maximum amount of an asset that can be borrowed.
 
-**Parameters:**
-- `asset` (required): Asset to transfer
-- `amount` (required): Amount to transfer
-- `type` (required): 1 for spot to margin, 2 for margin to spot
+```
+GET /api/v3/margin/maxTransferable
+```
+Queries the maximum amount of an asset that can be transferred from spot account to margin account.
+
+### Margin Loan Endpoints
+
+```
+POST /api/v3/margin/loan
+```
+Apply for a loan in a margin account.
+
+```
+GET /api/v3/margin/loan
+```
+Query loan records.
+
+```
+POST /api/v3/margin/repay
+```
+Repay a loan in a margin account.
+
+```
+GET /api/v3/margin/repay
+```
+Query repayment records.
+
+### Margin Trading Endpoints
+
+```
+POST /api/v3/margin/order/test
+```
+Test a new margin order creation without actually placing it.
+
+```
+POST /api/v3/margin/order
+```
+Places a new order for margin trading.
+
+```
+DELETE /api/v3/margin/order
+```
+Cancel an active margin order.
+
+```
+DELETE /api/v3/margin/openOrders
+```
+Cancels all active orders on a symbol for margin account.
+
+```
+GET /api/v3/margin/order
+```
+Check an order's status in the margin account.
+
+```
+GET /api/v3/margin/openOrders
+```
+Get all open margin orders on a symbol.
+
+```
+GET /api/v3/margin/allOrders
+```
+Get all margin account orders; active, canceled, or filled.
+
+```
+GET /api/v3/margin/myTrades
+```
+Get trades for a specific margin account and symbol.
+
+### Interest Rate & Liquidation Endpoints
+
+```
+GET /api/v3/margin/interestRate
+```
+Get the interest rate and quota for the margin assets.
+
+```
+GET /api/v3/margin/forceLiquidationRec
+```
+Get forced liquidation record.
+
+```
+GET /api/v3/margin/collateralRatio
+```
+Get current margin collateral ratio information.
 
 ## Futures Trading Endpoints
 
