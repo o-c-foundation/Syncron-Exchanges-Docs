@@ -110,7 +110,7 @@ Transfers funds between your margin account and spot account.
 |-----------|--------|----------|------------------------------------------------------------------------|
 | asset     | STRING | YES      | Asset being transferred, e.g., BTC                                     |
 | amount    | DECIMAL| YES      | Amount to be transferred                                               |
-| type      | INT    | YES      | 1: Transfer from spot account to margin account<br>2: Transfer from margin account to spot account |
+| type      | INT    | YES      | 1: Transfer from spot account to margin account<br/>2: Transfer from margin account to spot account |
 
 **Response:**
 
@@ -135,7 +135,7 @@ Retrieves the history of transfers between margin and spot accounts.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | asset | STRING | NO | The asset being transferred, e.g., BTC |
-| type | INT | NO | Transfer direction<br>1: Spot to Margin<br>2: Margin to Spot |
+| type | INT | NO | Transfer direction<br/>1: Spot to Margin<br/>2: Margin to Spot |
 | startTime | LONG | NO | Start time in milliseconds |
 | endTime | LONG | NO | End time in milliseconds |
 | current | INT | NO | Current page, default 1 |
