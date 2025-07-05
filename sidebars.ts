@@ -66,12 +66,11 @@ const sidebars: SidebarsConfig = {
         description: 'Integrate with SyncDex using our API',
       },
       items: [
-        'api/overview',
-        'api/authentication',
-        'api/market-data',
-        'api/trading',
-        'api/account',
-        'api/websockets',
+        {
+          type: 'link',
+          label: 'Interactive API Reference',
+          href: '/api-reference',
+        },
       ],
     },
     'faq',
