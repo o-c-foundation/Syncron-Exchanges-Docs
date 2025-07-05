@@ -21,6 +21,23 @@ interface Endpoint {
   operation: any;
 }
 
+// Helper for code sample tabs
+const LANGUAGES = [
+  { key: 'shell', label: 'Shell' },
+  { key: 'node', label: 'Node' },
+  { key: 'python', label: 'Python' },
+];
+
+function methodColor(method: string) {
+  switch (method) {
+    case 'GET': return 'bg-green-700 text-green-100';
+    case 'POST': return 'bg-blue-700 text-blue-100';
+    case 'PUT': return 'bg-yellow-700 text-yellow-100';
+    case 'DELETE': return 'bg-red-700 text-red-100';
+    default: return 'bg-gray-700 text-gray-100';
+  }
+}
+
 const ApiReference: React.FC = () => {
   const { siteConfig } = useDocusaurusContext();
   const [swaggerData, setSwaggerData] = useState<SwaggerSpec | null>(null);
@@ -31,6 +48,12 @@ const ApiReference: React.FC = () => {
   const [testParams, setTestParams] = useState<Record<string, any>>({});
   const [testResponse, setTestResponse] = useState<any>(null);
   const [testing, setTesting] = useState(false);
+  const [codeTab, setCodeTab] = useState('shell');
+  const [tryParams, setTryParams] = useState<Record<string, string>>({});
+  const [tryResult, setTryResult] = useState<any>(null);
+  const [tryLoading, setTryLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const loadSwaggerData = async () => {
@@ -127,8 +150,16 @@ const ApiReference: React.FC = () => {
     const url = `${baseUrl}${selectedEndpoint.path}`;
     
     switch (language) {
-      case 'javascript':
-        return `fetch('${url}', {
+      case 'shell':
+        return `curl -X ${selectedEndpoint.method} '${url}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-SD-APIKEY: YOUR_API_KEY' \
+  -H 'X-SD-SIGNATURE: YOUR_SIGNATURE' \
+  -H 'X-SD-TIMESTAMP: $(date +%s)000' \
+  ${selectedEndpoint.method !== 'GET' ? `-d '${JSON.stringify(testParams)}'` : ''}`;
+      case 'node':
+        return `const fetch = require('node-fetch');
+fetch('${url}', {
   method: '${selectedEndpoint.method}',
   headers: {
     'Content-Type': 'application/json',
@@ -136,47 +167,39 @@ const ApiReference: React.FC = () => {
     'X-SD-SIGNATURE': 'YOUR_SIGNATURE',
     'X-SD-TIMESTAMP': Date.now().toString()
   },
-  body: ${selectedEndpoint.method !== 'GET' ? JSON.stringify(testParams, null, 2) : 'undefined'}
-})
-.then(response => response.json())
-.then(data => console.log(data));`;
-      
+  ${selectedEndpoint.method !== 'GET' ? `body: JSON.stringify(${JSON.stringify(testParams, null, 2)})` : ''}
+}).then(r => r.json()).then(console.log);`;
       case 'python':
         return `import requests
-import time
-import hmac
-import hashlib
-
-api_key = 'YOUR_API_KEY'
-api_secret = 'YOUR_API_SECRET'
-timestamp = str(int(time.time() * 1000))
-
-# Generate signature
-message = timestamp + '${selectedEndpoint.method}' + '${selectedEndpoint.path}'
-signature = hmac.new(api_secret.encode(), message.encode(), hashlib.sha256).hexdigest()
-
+url = '${url}'
 headers = {
-    'X-SD-APIKEY': api_key,
-    'X-SD-SIGNATURE': signature,
-    'X-SD-TIMESTAMP': timestamp
+  'Content-Type': 'application/json',
+  'X-SD-APIKEY': 'YOUR_API_KEY',
+  'X-SD-SIGNATURE': 'YOUR_SIGNATURE',
+  'X-SD-TIMESTAMP': 'TIMESTAMP'
 }
-
-response = requests.${selectedEndpoint.method.toLowerCase()}('${url}', 
-    headers=headers,
-    json=${selectedEndpoint.method !== 'GET' ? str(testParams) : 'None'})
+${selectedEndpoint.method !== 'GET' ? `data = ${JSON.stringify(testParams, null, 2)}
+` : ''}response = requests.${selectedEndpoint.method.toLowerCase()}(url, headers=headers${selectedEndpoint.method !== 'GET' ? ', json=data' : ''})
 print(response.json())`;
-      
-      case 'curl':
-        return `curl -X ${selectedEndpoint.method} '${url}' \\
-  -H 'Content-Type: application/json' \\
-  -H 'X-SD-APIKEY: YOUR_API_KEY' \\
-  -H 'X-SD-SIGNATURE: YOUR_SIGNATURE' \\
-  -H 'X-SD-TIMESTAMP: $(date +%s)000' \\
-  ${selectedEndpoint.method !== 'GET' ? `-d '${JSON.stringify(testParams)}'` : ''}`;
-      
       default:
         return '';
     }
+  };
+
+  const handleTryIt = async () => {
+    setTryLoading(true);
+    setTimeout(() => {
+      setTryResult({
+        success: true,
+        sent: {
+          method: selectedEndpoint.method,
+          url: `https://api.syncdex.finance${selectedEndpoint.path}`,
+          params: testParams,
+        },
+        mock: true,
+      });
+      setTryLoading(false);
+    }, 1000);
   };
 
   if (loading) {
@@ -201,200 +224,173 @@ print(response.json())`;
   const tags = getTags();
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-[calc(100vh-56px)] bg-gray-900 text-gray-100">
       {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900 mb-4">API Reference</h1>
-          
-          {/* Search */}
-          <div className="mb-4">
-            <input
-              type="text"
-              placeholder="Search endpoints..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          {/* Tag Filter */}
-          <div className="mb-4">
-            <select
-              value={selectedTag}
-              onChange={(e) => setSelectedTag(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Endpoints</option>
-              {tags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
-          </div>
+      <aside className={clsx('w-80 border-r border-gray-800 bg-gray-950 flex flex-col', !sidebarOpen && 'hidden md:flex')}
+        style={{ minWidth: 260, maxWidth: 340 }}>
+        <div className="p-4 border-b border-gray-800">
+          <div className="text-lg font-bold tracking-wide mb-2 text-white">API Reference</div>
+          <input
+            className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="Search endpoints..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        
-        {/* Endpoints List */}
-        <div className="flex-1 overflow-y-auto">
-          {filteredEndpoints.map((endpoint, index) => (
-            <div
-              key={`${endpoint.method}-${endpoint.path}-${index}`}
-              onClick={() => setSelectedEndpoint(endpoint)}
-              className={clsx(
-                'p-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 transition-colors',
-                selectedEndpoint?.path === endpoint.path && selectedEndpoint?.method === endpoint.method
-                  ? 'bg-blue-50 border-l-4 border-l-blue-500'
-                  : ''
+        <nav className="flex-1 overflow-y-auto">
+          {Object.keys(filteredEndpoints).length === 0 && (
+            <div className="p-4 text-gray-400">No endpoints found.</div>
+          )}
+          {Object.entries(filteredEndpoints).map(([tag, endpoints]) => (
+            <div key={tag}>
+              <button
+                className="w-full flex items-center justify-between px-4 py-2 font-semibold text-left text-blue-300 hover:bg-gray-800 focus:outline-none"
+                onClick={() => setExpandedTags(t => ({ ...t, [tag]: !t[tag] }))}
+              >
+                <span>{tag}</span>
+                <span>{expandedTags[tag] !== false ? '▼' : '►'}</span>
+              </button>
+              {expandedTags[tag] !== false && (
+                <div>
+                  {endpoints.map((endpoint, index) => (
+                    <button
+                      key={`${endpoint.method}-${endpoint.path}-${index}`}
+                      className={clsx(
+                        'w-full flex items-center gap-2 px-8 py-2 text-left hover:bg-gray-800 rounded transition',
+                        selectedEndpoint && selectedEndpoint.path === endpoint.path && selectedEndpoint.method === endpoint.method
+                          ? 'bg-blue-900 text-blue-200' : 'text-gray-200'
+                      )}
+                      onClick={() => setSelectedEndpoint(endpoint)}
+                    >
+                      <span className={clsx('text-xs font-bold px-2 py-1 rounded', methodColor(endpoint.method))}>{endpoint.method}</span>
+                      <span className="font-mono text-sm truncate">{endpoint.path}</span>
+                    </button>
+                  ))}
+                </div>
               )}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className={clsx(
-                  'px-2 py-1 text-xs font-semibold rounded',
-                  endpoint.method === 'GET' && 'bg-green-100 text-green-800',
-                  endpoint.method === 'POST' && 'bg-blue-100 text-blue-800',
-                  endpoint.method === 'PUT' && 'bg-yellow-100 text-yellow-800',
-                  endpoint.method === 'DELETE' && 'bg-red-100 text-red-800'
-                )}>
-                  {endpoint.method}
-                </span>
-                <span className="text-sm font-mono text-gray-600">{endpoint.path}</span>
-              </div>
-              <p className="text-sm text-gray-700 truncate">
-                {endpoint.operation.summary || endpoint.operation.description || 'No description'}
-              </p>
             </div>
           ))}
+        </nav>
+      </aside>
+      {/* Main content */}
+      <main className="flex-1 flex flex-col overflow-y-auto">
+        {/* Topbar for mobile */}
+        <div className="md:hidden flex items-center bg-gray-950 border-b border-gray-800 px-4 py-2">
+          <button onClick={() => setSidebarOpen(o => !o)} className="mr-4 text-gray-300">
+            <svg width="24" height="24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <span className="font-bold text-lg">API Reference</span>
         </div>
-      </div>
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {selectedEndpoint ? (
-          <>
-            {/* Endpoint Header */}
-            <div className="bg-white border-b border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <span className={clsx(
-                  'px-3 py-1 text-sm font-semibold rounded',
-                  selectedEndpoint.method === 'GET' && 'bg-green-100 text-green-800',
-                  selectedEndpoint.method === 'POST' && 'bg-blue-100 text-blue-800',
-                  selectedEndpoint.method === 'PUT' && 'bg-yellow-100 text-yellow-800',
-                  selectedEndpoint.method === 'DELETE' && 'bg-red-100 text-red-800'
-                )}>
-                  {selectedEndpoint.method}
-                </span>
-                <span className="text-lg font-mono text-gray-900">{selectedEndpoint.path}</span>
-              </div>
-              
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {selectedEndpoint.operation.summary}
-              </h2>
-              
-              {selectedEndpoint.operation.description && (
-                <p className="text-gray-600 mb-4">{selectedEndpoint.operation.description}</p>
-              )}
-              
-              {selectedEndpoint.operation.tags && (
-                <div className="flex gap-2">
-                  {selectedEndpoint.operation.tags.map((tag: string) => (
-                    <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* Endpoint Details */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Parameters */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Parameters</h3>
-                  
-                  {selectedEndpoint.operation.parameters ? (
-                    <div className="space-y-4">
-                      {selectedEndpoint.operation.parameters.map((param: any, index: number) => (
-                        <div key={index} className="border-b border-gray-100 pb-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
-                              {param.name}
-                            </span>
-                            <span className="text-sm text-gray-500">{param.in}</span>
-                            {param.required && (
-                              <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
-                                Required
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">{param.description}</p>
-                          <input
-                            type="text"
-                            placeholder={param.schema?.type === 'number' ? '0' : 'Enter value'}
-                            value={testParams[param.name] || ''}
-                            onChange={(e) => setTestParams({
-                              ...testParams,
-                              [param.name]: e.target.value
-                            })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No parameters required</p>
-                  )}
-                  
-                  <button
-                    onClick={testEndpoint}
-                    disabled={testing}
-                    className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {testing ? 'Testing...' : 'Test Endpoint'}
-                  </button>
-                </div>
-                
-                {/* Response */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Response</h3>
-                  
-                  {testResponse ? (
-                    <div className="bg-gray-50 rounded-md p-4">
-                      <pre className="text-sm overflow-x-auto">
-                        {JSON.stringify(testResponse, null, 2)}
-                      </pre>
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">Click "Test Endpoint" to see the response</p>
-                  )}
-                </div>
-              </div>
-              
-              {/* Code Samples */}
-              <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Code Samples</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {['javascript', 'python', 'curl'].map(language => (
-                    <div key={language} className="bg-gray-50 rounded-md p-4">
-                      <h4 className="font-semibold text-gray-900 mb-2 capitalize">{language}</h4>
-                      <pre className="text-sm overflow-x-auto bg-white p-3 rounded border">
-                        <code>{generateCodeSample(language)}</code>
-                      </pre>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
+        {/* Endpoint details */}
+        {!selectedEndpoint ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Select an Endpoint</h2>
-              <p className="text-gray-600">Choose an endpoint from the sidebar to view its documentation</p>
+              <h2 className="text-2xl font-bold mb-2">Select an Endpoint</h2>
+              <p className="text-gray-400">Choose an endpoint from the sidebar to view its documentation.</p>
             </div>
           </div>
+        ) : (
+          <div className="flex flex-col md:flex-row h-full">
+            {/* Endpoint info */}
+            <section className="flex-1 p-8 max-w-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <span className={clsx('text-xs font-bold px-2 py-1 rounded', methodColor(selectedEndpoint.method))}>{selectedEndpoint.method}</span>
+                <span className="font-mono text-lg text-white">{selectedEndpoint.path}</span>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">{selectedEndpoint.operation.summary || 'Endpoint'}</h1>
+              {selectedEndpoint.operation.description && <p className="mb-4 text-gray-300">{selectedEndpoint.operation.description}</p>}
+              {/* Parameters */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-2 text-white">Parameters</h2>
+                {selectedEndpoint.operation.parameters && selectedEndpoint.operation.parameters.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedEndpoint.operation.parameters.map((param: any) => (
+                      <div key={param.name} className="bg-gray-800 rounded p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-sm text-gray-200">{param.name}</span>
+                          <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-400">{param.in}</span>
+                          {param.required && <span className="text-xs bg-red-700 text-red-100 px-2 py-0.5 rounded">required</span>}
+                        </div>
+                        <div className="text-gray-400 text-sm mb-1">{param.description}</div>
+                        <input
+                          className="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                          placeholder={param.schema?.type || 'value'}
+                          value={testParams[param.name] || ''}
+                          onChange={(e) => setTestParams({
+                            ...testParams,
+                            [param.name]: e.target.value
+                          })}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : <div className="text-gray-400">No parameters</div>}
+              </div>
+              {/* Responses */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-2 text-white">Responses</h2>
+                {selectedEndpoint.operation.responses ? (
+                  <div className="space-y-2">
+                    {Object.entries(selectedEndpoint.operation.responses).map(([code, resp]: any) => (
+                      <div key={code} className="flex gap-2 items-center">
+                        <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-300">{code}</span>
+                        <span className="text-gray-300 text-sm">{resp.description}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : <div className="text-gray-400">No response info</div>}
+              </div>
+            </section>
+            {/* Try It & Code Samples */}
+            <aside className="w-full md:w-[420px] bg-gray-950 border-l border-gray-800 p-8 flex flex-col gap-8">
+              {/* Try It */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-bold text-lg text-white">Try It</span>
+                  <span className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded">Mock</span>
+                </div>
+                <button
+                  className="w-full bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition mb-2 disabled:opacity-50"
+                  onClick={handleTryIt}
+                  disabled={tryLoading}
+                >
+                  {tryLoading ? 'Sending...' : 'Send Request'}
+                </button>
+                <div className="bg-gray-900 rounded p-3 min-h-[80px] mt-2">
+                  {tryResult ? (
+                    <pre className="text-xs text-gray-200 whitespace-pre-wrap">{JSON.stringify(tryResult, null, 2)}</pre>
+                  ) : <span className="text-gray-500 text-sm">No request sent yet.</span>}
+                </div>
+              </div>
+              {/* Code Samples */}
+              <div>
+                <div className="flex items-center gap-4 mb-2">
+                  <span className="font-bold text-lg text-white">Code Samples</span>
+                  <div className="flex gap-2">
+                    {LANGUAGES.map(lang => (
+                      <button
+                        key={lang.key}
+                        className={clsx(
+                          'px-3 py-1 rounded text-xs font-bold',
+                          codeTab === lang.key ? 'bg-blue-700 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        )}
+                        onClick={() => setCodeTab(lang.key)}
+                      >
+                        {lang.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-gray-900 rounded p-3">
+                  <pre className="text-xs text-gray-200 whitespace-pre-wrap">
+                    {generateCodeSample(codeTab)}
+                  </pre>
+                </div>
+              </div>
+            </aside>
+          </div>
         )}
-      </div>
+      </main>
     </div>
   );
 };
